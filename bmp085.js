@@ -223,7 +223,7 @@ var log = function () {
     }
 };
 
-exports.readBarometer = function (callback) {
+exports.read = function (callback) {
     events.on('calibrated', function () {
         readData(callback);
     });
