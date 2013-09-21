@@ -1,0 +1,11 @@
+{
+  "name": "bmp085",
+  "version": "0.1.0",
+  "description": "Simple module for reading data from a Bosch BMP085 barometer.",
+  "main": "bmp085.js",
+  "author": "Ricco Førgaard",
+  "license": "MIT",
+  "dependencies": {
+    "i2c": "~0.1.4"
+  }
+}
