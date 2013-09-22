@@ -10,6 +10,7 @@
     "url": "https://github.com/fiskeben/bmp085.git"
   },
   "dependencies": {
-    "i2c": "~0.1.4"
+    "i2c": "~0.1.4",
+    "underscore": "~1.5.2"
   }
 }
