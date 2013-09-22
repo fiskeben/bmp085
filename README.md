@@ -13,14 +13,32 @@ $ npm install bmp085
 Usage
 -----
 
-The module exports one function, `read` which takes a callback function as an argument. The callback will receive an object with the temperature (in degrees Celcius) and air pressure (in hPa).
+The module's `read` function takes a callback function as an argument. The callback will receive an object with the temperature (in degrees Celcius) and air pressure (in hPa).
 
 Example:
 
 ```
-var bmp085 = require('bmp085');
-bmp085.read(function (data) {
+var BMP085 = require('bmp085'),
+    barometer = new BMP085();
+
+barometer.read(function (data) {
     console.log("Temperature:", data.temperature);
     console.log("Pressure:", data.pressure);
 });
+```
+
+Configuration
+-------------
+
+Configure the sensor by supplying an options object to the constructor:
+
+```
+new BMP085(
+    {
+        'mode': 1,
+        'address': 0x77,
+        'device': '/dev/i2c-1'
+    }
+);
+
 ```
