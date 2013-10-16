@@ -10,6 +10,8 @@ Install
 $ npm install bmp085
 ```
 
+Raspberry Pi users: Remember to [enable i2c on your Pi](https://github.com/kelly/node-i2c#raspberry-pi-setup) if you haven't done already.
+
 Usage
 -----
 
