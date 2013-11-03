@@ -22,6 +22,29 @@ var BMP085 = function (opts) {
     debug = self.options.debug;
 };
 
+BMP085.prototype.modes = {
+    'ULTRA_LOW_POWER' : 0,
+    'STANDARD' : 1,
+    'HIGHRES' : 2,
+    'ULTRA_HIGHRES' : 3
+};
+
+BMP085.prototype.getTimeToWait = function () {
+    var timeToWait = 8;
+    switch (this.options.mode) {
+        case this.modes.ULTRA_LOW_POWER:
+            timeToWait = 5;
+            break;
+        case this.modes.HIGHRES:
+            timeToWait = 14;
+            break;
+        case this.modes.ULTRA_HIGHRES:
+            timeToWait = 26;
+            break;
+    }
+    return timeToWait;
+};
+
 BMP085.prototype.calibrationRegisters = [
     {
         'name': 'ac1',
@@ -204,6 +227,7 @@ BMP085.prototype.readPressure = function (callback) {
         if (err) {
             throw(err);
         }
+        var timeToWait = self.getTimeToWait();
         setTimeout(function() {
             self.wire.readBytes(self.registers.pressureData.location, 3, function(err, bytes) {
                 if (err) {
@@ -215,7 +239,7 @@ BMP085.prototype.readPressure = function (callback) {
                     value = ((msb << 16) + (lsb << 8) + xlsb) >> (8 - self.options.mode);
                 callback(value);
             });
-        }, 8);
+        }, timeToWait);
     });
 };
 
