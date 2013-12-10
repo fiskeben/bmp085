@@ -13,7 +13,7 @@ var BMP085 = function (opts) {
     var self = this;
     self.options = _.extend({}, defaultOptions, opts);
     self.events = new EventEmitter();
-    self.wire = new Wire(this.options.address);
+    self.wire = new Wire(this.options.address, {device: this.options.device, debug: this.options.debug});
 
     self.events.on('calibrated', function () {
         self.readData(self.userCallback);
