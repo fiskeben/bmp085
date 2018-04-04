@@ -187,7 +187,9 @@ BMP085.prototype.readData = function (callback) {
         self.readPressure(function (rawPressure) {
             var temperature = self.convertTemperature(rawTemperature),
                 pressure = self.convertPressure(rawPressure);
-            callback({'temperature': temperature, 'pressure': pressure});
+            if (callback) {
+                callback({'temperature': temperature, 'pressure': pressure});
+            }
         });
     });
 };
