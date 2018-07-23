@@ -149,14 +149,6 @@ BMP085.prototype.readWord = function (register, length, callback) {
 BMP085.prototype.calibrate = function () {
     this.calibrationData = {};
     this.waitForCalibrationData();
-
-    var self = this;
-
-    this.calibrationRegisters.forEach(function(register) {
-        self.readWord(register, function(reg, value) {
-            self.calibrationData[reg.name] = value;
-        });
-    });
 };
 
 BMP085.prototype.waitForCalibrationData = function () {
@@ -165,18 +157,25 @@ BMP085.prototype.waitForCalibrationData = function () {
         ready = true,
         self = this;
 
-    for (i = 0; i < self.calibrationRegisters.length; i++) {
-        register = self.calibrationRegisters[i];
+    this.calibrationRegisters.forEach(function(register) {
         if (typeof self.calibrationData[register.name] === 'undefined') {
             ready = false;
+            self.readWord(register, function(reg, value) {
+                self.calibrationData[reg.name] = value;
+            });
         }
-    }
+    });
     if (ready) {
         self.events.emit('calibrated');
     } else {
-        setTimeout(function () {
-            self.waitForCalibrationData();
-        }, 5);
+        self.calibrationAttempts = self.calibrationAttempts || 0;
+        if (42 * self.calibrationRegisters.length >= ++self.calibrationAttempts) {
+            setTimeout(function () {
+                self.waitForCalibrationData();
+            }, self.getTimeToWait());
+        } else {
+            throw "error: Calibration failed: " + self.calibrationAttempts;
+        }
     }
 };
 
