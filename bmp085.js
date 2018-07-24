@@ -14,6 +14,7 @@ var BMP085 = function (opts) {
     self.options = _.extend({}, defaultOptions, opts);
     self.events = new EventEmitter();
     self.wire = new Wire(this.options.address, {device: this.options.device, debug: this.options.debug});
+    self.calibrationData = {};
 
     self.events.on('calibrated', function () {
         self.readData(self.userCallback);
@@ -130,7 +131,7 @@ BMP085.prototype.readWord = function (register, length, callback) {
 
     self.wire.readBytes(register.location, length, function(err, bytes) {
         if (err) {
-            throw(err);
+            return callback(err, null, null);
         }
 
         var hi = bytes.readUInt8(0),
@@ -142,39 +143,37 @@ BMP085.prototype.readWord = function (register, length, callback) {
         }
 
         value = (hi << 8) + lo;
-        callback(register, value);
+        callback(null, register, value);
     });
 };
 
-BMP085.prototype.calibrate = function () {
-    this.calibrationData = {};
-    this.waitForCalibrationData();
-};
-
-BMP085.prototype.waitForCalibrationData = function () {
+BMP085.prototype.calibrate = function (callback) {
     var register,
         i,
         ready = true,
         self = this;
-
-    this.calibrationRegisters.forEach(function(register) {
+     this.calibrationRegisters.forEach(function(register) {
         if (typeof self.calibrationData[register.name] === 'undefined') {
             ready = false;
-            self.readWord(register, function(reg, value) {
-                self.calibrationData[reg.name] = value;
+            self.readWord(register, function(err, reg, value) {
+                if (!err) {
+                    self.calibrationData[reg.name] = value;
+                }
             });
         }
     });
+
     if (ready) {
-        self.events.emit('calibrated');
+      callback && callback(null);
+      return self.events.emit('calibrated');
     } else {
         self.calibrationAttempts = self.calibrationAttempts || 0;
         if (42 * self.calibrationRegisters.length >= ++self.calibrationAttempts) {
             setTimeout(function () {
-                self.waitForCalibrationData();
+                self.calibrate(callback);
             }, self.getTimeToWait());
         } else {
-            throw "error: Calibration failed: " + self.calibrationAttempts;
+            callback && callback("error: Calibration failed " + self.calibrationAttempts);
         }
     }
 };
@@ -182,8 +181,14 @@ BMP085.prototype.waitForCalibrationData = function () {
 BMP085.prototype.readData = function (callback) {
     var self = this;
 
-    self.readTemperature(function (rawTemperature) {
-        self.readPressure(function (rawPressure) {
+    self.readTemperature(function (err, rawTemperature) {
+        if (err && callback) {
+            return callback(null);
+        }
+        self.readPressure(function (err, rawPressure) {
+            if (err && callback) {
+                 return callback(null);
+            }
             var temperature = self.convertTemperature(rawTemperature),
                 pressure = self.convertPressure(rawPressure);
             if (callback) {
@@ -198,12 +203,12 @@ BMP085.prototype.readTemperature = function (callback) {
 
     log("Read temp", self.registers.control.location, self.commands.readTemp);
     self.wire.writeBytes(self.registers.control.location, new Buffer([self.commands.readTemp]), function(err) {
-        if (err) {
-            throw(err);
+        if (err && callback) {
+            return callback(err);
         }
         setTimeout(function() {
-            self.readWord(self.registers.tempData, function(reg, value) {
-                callback(value);
+            self.readWord(self.registers.tempData, function(err, reg, value) {
+                callback(err, value);
             });
         }, 5);
     });
@@ -225,20 +230,20 @@ BMP085.prototype.readPressure = function (callback) {
     var self = this;
 
     self.wire.writeBytes(self.registers.control.location, new Buffer([self.commands.readPressure + (self.options.mode << 6)]), function(err) {
-        if (err) {
-            throw(err);
+        if (err && callback) {
+            return callback(err);
         }
         var timeToWait = self.getTimeToWait();
         setTimeout(function() {
             self.wire.readBytes(self.registers.pressureData.location, 3, function(err, bytes) {
-                if (err) {
-                    throw(err);
+                if (err && callback) {
+                    return callback(err, null);
                 }
                 var msb = bytes.readUInt8(0),
                     lsb = bytes.readUInt8(1),
                     xlsb = bytes.readUInt8(2),
                     value = ((msb << 16) + (lsb << 8) + xlsb) >> (8 - self.options.mode);
-                callback(value);
+                callback && callback(err, value);
             });
         }, timeToWait);
     });
@@ -272,13 +277,19 @@ BMP085.prototype.convertPressure = function (raw) {
 
     p = p + ((x1 + x2 + 3791) >> 4);
     p = p / 100; // hPa
-    
+
     return p;
 };
 
 BMP085.prototype.read = function (callback) {
+    var self = this;
     this.userCallback = callback;
-    this.calibrate();
+    this.calibrate(function(err) {
+        if (err && callback) {
+            log("bmp085: " + err);
+            callback(null);
+        }
+    });
 };
 
 var log = function () {

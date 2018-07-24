@@ -21,7 +21,12 @@ var Bmp085 = require('./bmp085'),
         });
     },
     startTest = function () {
+      try {
         testStandardMode();
+      } catch (err) {
+        console.log("error: " + err);
+        throw (err);
+      }
     };
 
 startTest();
