@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "i2c": "0.2.3",
-    "underscore": "~1.5.2"
+    "underscore": "1.9.1"
   }
 }
