@@ -166,16 +166,17 @@ BMP085.prototype.calibrate = function (callback) {
     if (ready) {
       callback && callback(null);
       return self.events.emit('calibrated');
-    } else {
-        self.calibrationAttempts = self.calibrationAttempts || 0;
-        if (42 * self.calibrationRegisters.length >= ++self.calibrationAttempts) {
-            setTimeout(function () {
-                self.calibrate(callback);
-            }, self.getTimeToWait());
-        } else {
-            callback && callback("error: Calibration failed " + self.calibrationAttempts);
-        }
     }
+
+    self.calibrationAttempts = self.calibrationAttempts || 0;
+    if (42 * self.calibrationRegisters.length >= ++self.calibrationAttempts) {
+        setTimeout(function () {
+            self.calibrate(callback);
+        }, self.getTimeToWait());
+    } else {
+        callback && callback("error: Calibration failed " + self.calibrationAttempts);
+    }
+
 };
 
 BMP085.prototype.readData = function (callback) {
