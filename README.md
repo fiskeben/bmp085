@@ -36,7 +36,7 @@ barometer.read(function (data) {
 Configuration
 -------------
 
-Configure the sensor by supplying an options object to the constructor:
+Optionnaly configure the sensor by supplying an options object to the constructor:
 
 ```
 new BMP085(
@@ -48,3 +48,11 @@ new BMP085(
 );
 
 ```
+
+Resources
+---------
+
+* https://github.com/fiskeben/bmp085
+* https://www.npmjs.com/package/bmp085
+* https://www.openhub.net/p/bmp085
+* https://github.com/rzr/generic-sensors-lite
